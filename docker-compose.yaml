@@ -1,0 +1,67 @@
+version: "3.8"
+
+services:
+  backend:
+    env_file: .env
+    build:
+      context: backend/.
+      dockerfile: Dockerfile
+      target: builder
+    environment:
+      - PORT=4500
+    restart: always
+    volumes:
+      - ./.env:/usr/app/.env
+    depends_on:
+      - db
+    ports:
+      - "4500:4500"
+
+  frontend:
+    env_file: .env
+    build:
+      context: frontend/.
+      dockerfile: Dockerfile
+      target: builder
+      args:
+        - NODE_ENV=${NODE_ENV}
+    environment:
+      - PORT=3000
+    volumes:
+      - ./.env:/usr/app/.env
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+  db:
+    env_file: .env
+    image: mongo:6.0
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_DB_DATABASE}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_DB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_DB_PASSWORD}
+    volumes:
+      - mongo-data:/data/db
+      - ./entrypoint.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    command:
+      mongod --auth
+
+  mongo-express:
+    env_file: .env
+    image: mongo-express
+    container_name: mongodb-ui
+    ports:
+      - "8081:8081"
+    depends_on:
+      - db
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_DB_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_DB_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_DB_USERNAME}:${MONGO_DB_PASSWORD}@db:27017/${MONGO_DB_DATABASE}?retryWrites=true&w=majority
+
+volumes:
+  mongo-data:
