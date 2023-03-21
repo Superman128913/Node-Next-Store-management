@@ -517,7 +517,7 @@ const AddStore = () => {
                   You should pay $50/month to use this feature.
                 </Typography>
               </Box>
-              <CardContent>billingID.current
+              <CardContent>
                 <Grid container spacing={2}>
                   <Grid item xs={12} lg={12}>
                     <Button
